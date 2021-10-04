@@ -16,7 +16,7 @@ class Bootstrap implements \yii\base\BootstrapInterface
         if (!isset($app->i18n->translations['modules/notifications/*'])) {
             $app->i18n->translations['modules/notifications*'] = [
                 'class' => 'yii\i18n\PhpMessageSource',
-                'sourceLanguage' => 'en-US',
+                'sourceLanguage' => 'pt',
                 'basePath' => '@webzop/notifications/messages',
             ];
         }

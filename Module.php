@@ -10,9 +10,6 @@ class Module extends \yii\base\Module
 
     public $channels = [];
 
-    public $controllerNamespace = 'webzop\notifications\controllers';
-
-
     /**
      * Send a notification to all channels
      *
@@ -20,31 +17,28 @@ class Module extends \yii\base\Module
      * @param array|null $channels
      * @return Channel|null return the channel
      */
-    public function send($notification, array $channels = null){
-        if($channels === null){
+    public function send($notification, array $channels = null)
+    {
+        if ($channels === null) {
             $channels = array_keys($this->channels);
         }
 
         foreach ((array)$channels as $id) {
             $channel = $this->getChannel($id);
-            if(!$notification->shouldSend($channel)){
+            if (!$notification->shouldSend($channel)) {
                 continue;
             }
 
             $handle = 'to'.ucfirst($id);
             try {
-                if($notification->hasMethod($handle)){
+                if ($notification->hasMethod($handle)) {
                     call_user_func([clone $notification, $handle], $channel);
-                }
-                else {
+                } else {
                     $channel->send(clone $notification);
                 }
             } catch (\Exception $e) {
-                if (YII_DEBUG) {
-                    throw $e;
-                }
+                // RETIRADO POR WARNING PROEVO
                 Yii::warning("Notification sended by channel '$id' has failed: " . $e->getMessage(), __METHOD__);
-                Yii::warning($e, __METHOD__);
             }
         }
     }
@@ -56,8 +50,9 @@ class Module extends \yii\base\Module
      * @return Channel|null return the channel
      * @throws InvalidParamException
      */
-    public function getChannel($id){
-        if(!isset($this->channels[$id])){
+    public function getChannel($id)
+    {
+        if (!isset($this->channels[$id])) {
             throw new InvalidParamException("Unknown channel '{$id}'.");
         }
 
@@ -68,8 +63,8 @@ class Module extends \yii\base\Module
         return $this->channels[$id];
     }
 
-    protected function createChannel($id, $config){
+    protected function createChannel($id, $config)
+    {
         return Yii::createObject($config, [$id]);
     }
-
 }
