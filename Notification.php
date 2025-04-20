@@ -11,7 +11,7 @@ use Yii;
  * @property integer $userId
  * @property array $data
  */
-abstract class Notification extends \yii\base\Object
+abstract class Notification extends \yii\base\BaseObject
 {
     public $key;
 

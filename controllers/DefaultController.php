@@ -3,8 +3,7 @@
 namespace webzop\notifications\controllers;
 
 use Yii;
-use yii\filters\AccessControl;
-use yii\web\Controller;
+use backend\controllers\Controller;
 use yii\db\Query;
 use yii\data\Pagination;
 use yii\helpers\Url;
@@ -13,21 +12,6 @@ use webzop\notifications\widgets\Notifications;
 
 class DefaultController extends Controller
 {
-
-    public function behaviors()
-    {
-        return [
-            'access' => [
-                'class' => AccessControl::class,
-                'rules' => [
-                    [
-                        'allow' => true,
-                        'roles' => ['@'],
-                    ]
-                ]
-            ],
-        ];
-    }
 
     public $layout = "@app/views/layouts/main";
 
@@ -40,8 +24,8 @@ class DefaultController extends Controller
     {
         $userId = Yii::$app->getUser()->getId();
         $query = (new Query())
-            ->from('{{%notifications}}')
-            ->andWhere(['or', 'user_id = 0', 'user_id = :user_id'], [':user_id' => $userId]);
+            ->from('notifications')
+            ->andWhere(['user_id'=>$userId]);
 
         $pagination = new Pagination([
             'pageSize' => 20,
@@ -49,7 +33,7 @@ class DefaultController extends Controller
         ]);
 
         $list = $query
-            ->orderBy(['id' => SORT_DESC])
+            ->orderBy('id DESC')
             ->offset($pagination->offset)
             ->limit($pagination->limit)
             ->all();
@@ -66,10 +50,10 @@ class DefaultController extends Controller
     {
         $userId = Yii::$app->getUser()->getId();
         $list = (new Query())
-            ->from('{{%notifications}}')
-            ->andWhere(['or', 'user_id = 0', 'user_id = :user_id'], [':user_id' => $userId])
-            ->orderBy(['id' => SORT_DESC])
-            ->limit(10)
+            ->from('notifications')
+            ->andWhere(['user_id'=> $userId])
+            ->orderBy('id DESC')
+            ->limit(5)
             ->all();
         $notifs = $this->prepareNotifications($list);
         $this->ajaxResponse(['list' => $notifs]);
@@ -81,11 +65,11 @@ class DefaultController extends Controller
         $this->ajaxResponse(['count' => $count]);
     }
 
-    public function actionRead($id)
+    public function actionRead($notificationId)
     {
-        Yii::$app->getDb()->createCommand()->update('{{%notifications}}', ['read' => true], ['id' => $id])->execute();
+        Yii::$app->getDb()->createCommand()->update('notifications', ['read' => 1], ['id' => $notificationId])->execute();
 
-        if(Yii::$app->getRequest()->getIsAjax()){
+        if (Yii::$app->getRequest()->getIsAjax()) {
             return $this->ajaxResponse(1);
         }
 
@@ -94,48 +78,61 @@ class DefaultController extends Controller
 
     public function actionReadAll()
     {
-        Yii::$app->getDb()->createCommand()->update(
-            '{{%notifications}}',
-            ['read' => true, 'seen' => true],
-            ['user_id' => Yii::$app->user->id]
-            )->execute();
-        if(Yii::$app->getRequest()->getIsAjax()){
+        // LENDO SOMENTE AS NOTIFICACOES DO USUARIO
+        Yii::$app->getDb()->createCommand()->update('notifications', ['read' => 1], ['user_id' => Yii::$app->user->id])->execute();
+        
+        if (Yii::$app->getRequest()->getIsAjax()) {
             return $this->ajaxResponse(1);
         }
 
-        Yii::$app->getSession()->setFlash('success', Yii::t('modules/notifications', 'All notifications have been marked as read.'));
+        Yii::$app->getSession()->setFlash('success', ['message' => Yii::t('modules/notifications', 'Todas as notificações foram marcadas como lidas')]);
+
+        return Yii::$app->getResponse()->redirect(['/notifications/default/index']);
+    }
+
+    public function actionDelete($notificationId)
+    {
+        // DELETANDO SOMENTE AS NOTIFICACOES DO USUARIO
+        Yii::$app->getDb()->createCommand()->delete('notifications', ['id' => $notificationId, 'user_id' => Yii::$app->user->id])->execute();
+
+        if (Yii::$app->getRequest()->getIsAjax()) {
+            return $this->ajaxResponse(1);
+        }
 
         return Yii::$app->getResponse()->redirect(['/notifications/default/index']);
     }
 
     public function actionDeleteAll()
     {
-        Yii::$app->getDb()->createCommand()->delete('{{%notifications}}')->execute();
+        // DELETANDO SOMENTE AS NOTIFICACOES DO USUARIO
+        Yii::$app->getDb()->createCommand()->delete('notifications', ['user_id' => Yii::$app->user->id])->execute();
 
-        if(Yii::$app->getRequest()->getIsAjax()){
+        if (Yii::$app->getRequest()->getIsAjax()) {
             return $this->ajaxResponse(1);
         }
 
-        Yii::$app->getSession()->setFlash('success', Yii::t('modules/notifications', 'All notifications have been deleted.'));
+        Yii::$app->getSession()->setFlash('success', ['message' => Yii::t('modules/notifications', 'All notifications have been deleted.')]);
 
         return Yii::$app->getResponse()->redirect(['/notifications/default/index']);
     }
 
-    private function prepareNotifications($list){
+    private function prepareNotifications($list)
+    {
         $notifs = [];
         $seen = [];
-        foreach($list as $notif){
-            if(!$notif['seen']){
+        foreach ($list as $notif) {
+            if (!$notif['seen']) {
                 $seen[] = $notif['id'];
             }
             $route = @unserialize($notif['route']);
             $notif['url'] = !empty($route) ? Url::to($route) : '';
+            $notif['urlRedirect'] = Url::toRoute(["/notifications/default/redirect-read", "id" => $notif["id"]]);
             $notif['timeago'] = TimeElapsed::timeElapsed($notif['created_at']);
             $notifs[] = $notif;
         }
 
-        if(!empty($seen)){
-            Yii::$app->getDb()->createCommand()->update('{{%notifications}}', ['seen' => true], ['id' => $seen])->execute();
+        if (!empty($seen)) {
+            Yii::$app->getDb()->createCommand()->update('notifications', ['seen' => 1], ['id' => $seen])->execute();
         }
 
         return $notifs;
@@ -143,7 +140,7 @@ class DefaultController extends Controller
 
     public function ajaxResponse($data = [])
     {
-        if(is_string($data)){
+        if (is_string($data)) {
             $data = ['html' => $data];
         }
 
@@ -158,4 +155,13 @@ class DefaultController extends Controller
         return $this->asJson($data);
     }
 
+
+    public function actionRedirectRead($id)
+    {
+        if ($id != null) {
+            $notification = Yii::$app->db->createCommand('SELECT * FROM notifications WHERE id = '. $id)->queryOne();
+            Yii::$app->getDb()->createCommand()->update('notifications', ['read' => 1], ['id' => $id])->execute();
+            return $this->redirect($notification["route"]);
+        }
+    }
 }

@@ -5,7 +5,7 @@ namespace webzop\notifications;
 use Yii;
 
 
-abstract class Channel extends \yii\base\Object
+abstract class Channel extends \yii\base\BaseObject
 {
 
     public $id;

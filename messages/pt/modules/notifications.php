@@ -17,15 +17,16 @@
  * NOTE: this file must be saved in UTF-8 encoding.
  */
 return [
-    'All notifications have been deleted.' => 'Todas as notificações foram apagadas.',
-    'All notifications have been marked as read.' => 'As notificações foram marcadas como lidas.',
+    'All notifications have been deleted.' => 'Todas as notificações foram apagadas',
+    'All notifications have been marked as read.' => 'Todas as notificações foram lidas',
     'Delete all' => 'Apagar tudo',
-    'Mark all as read' => 'Marcar tudo como lido',
-    'Mark as read' => 'Marcar como lido',
+    'Mark all as read' => 'Ler todas',
+    'Mark as read' => 'Marcar como lida',
     'Notifications' => 'Notificações',
-    'Read' => 'Lido',
-    'There are no notifications to show' => 'Não há notificações para mostrar',
-    'View all' => 'Ver tudo',
+    'Read' => 'Lida',
+    'No notifications found' => '<i class="fa fa-3x fa-bell-o" aria-hidden="true"></i><br><h5>Não existem notificações</h5>',
+    'There are no notifications to show' => 'Não existem notificações',
+    'View all' => 'Ver todas',
     'a moment' => 'um momento',
     'ago' => 'atrás',
     '{n, plural, one{one day} other{# days}}' => '{n, plural, one{um dia} other{# dias}}',

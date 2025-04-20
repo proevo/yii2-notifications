@@ -15,8 +15,8 @@ var Notifications = (function(opts) {
     var options = $.extend({
         pollInterval: 60000,
         xhrTimeout: 2000,
-        readLabel: 'read',
-        markAsReadLabel: 'mark as read'
+        readLabel: 'Lida',
+        markAsReadLabel: 'Marcar como lida'
     }, opts);
 
     /**
@@ -26,14 +26,15 @@ var Notifications = (function(opts) {
      * @returns {jQuery|HTMLElement|*}
      */
     var renderRow = function (object) {
-        var html = '<div href="#" class="dropdown-item notification-item' + (object.read != '0' ? ' read' : '') + '"' +
+        var messageCrop = object.message.length > 120 ? object.message.substring(0, 120) + '...' : object.message;
+        var html = '<div class="dropdown-item notification-item' + (object.read != '0' ? ' read' : '') + '"' +
             ' data-id="' + object.id + '"' +
             ' data-class="' + object.class + '"' +
             ' data-key="' + object.key + '">' +
             '<span class="icon"></span> '+
-            '<span class="message">' + object.message + '</span>' +
-            '<small class="timeago">' + object.timeago + '</small>' +
             '<span class="mark-read" data-toggle="tooltip" title="' + (object.read != '0' ? options.readLabel : options.markAsReadLabel) + '"></span>' +
+            '<small class="timeago">' + object.timeago + '</small>' +
+            '<a href="' + object.urlRedirect + '" class="message">' + messageCrop + '</a>' +
             '</div>';
         return $(html);
     };
@@ -68,7 +69,7 @@ var Notifications = (function(opts) {
                         $.ajax({
                             url: options.readUrl,
                             type: "GET",
-                            data: {id: item.data('id')},
+                            data: {notificationId: item.data('id')},
                             dataType: "json",
                             timeout: opts.xhrTimeout,
                             success: function (data) {
@@ -114,7 +115,6 @@ var Notifications = (function(opts) {
             success: function (data) {
                 markRead(elem.find('.dropdown-item:not(.read)').find('.mark-read'));
                 link.off('click').on('click', function(){ return false; });
-                updateCount();
             }
         });
     });
@@ -122,7 +122,7 @@ var Notifications = (function(opts) {
     var markRead = function(mark){
         mark.off('click').on('click', function(){ return false; });
         mark.attr('title', options.readLabel);
-        mark.tooltip('dispose').tooltip();
+        //mark.tooltip('dispose').tooltip();
         mark.closest('.dropdown-item').addClass('read');
     };
 
